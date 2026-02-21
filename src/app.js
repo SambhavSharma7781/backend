@@ -16,8 +16,10 @@ app.use(cookieParser());
 
 // routes 
 import userRoutes from "./routes/user.routes.js";
+import healthRoutes from "./routes/health.routes.js";
 
 //routes declaration 
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1", healthRoutes);
 
 export default app;
