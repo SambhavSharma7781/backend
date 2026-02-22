@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import asyncHandler from "../utils/asyncHandler.js"
 import { uploadToCloudinary } from "../utils/cloudinary.js"
+import { v2 as cloudinary } from "cloudinary";
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -94,23 +95,154 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: get video by id
+
+    if (!mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new ApiError(400, "Invalid video id");
+    }
+
+    const video = await Video.findById(videoId)
+        .populate("owner", "fullname username avatar");
+
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    await Video.findByIdAndUpdate(videoId, {
+        $inc: { views: 1 }
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, video, "Video fetched successfully")
+    );
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
-    const { videoId } = req.params
-    //TODO: update video details like title, description, thumbnail
 
-})
+    const { videoId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new ApiError(400, "Invalid video id");
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    if (video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not allowed to update this video");
+    }
+
+    const { title, description } = req.body;
+
+    if (title) video.title = title.trim();
+    if (description) video.description = description.trim();
+
+     const thumbnailLocalPath = req.file?.path;
+
+    if (thumbnailLocalPath) {
+
+        const uploadedThumbnail = await uploadToCloudinary(thumbnailLocalPath);
+
+        if (!uploadedThumbnail) {
+            throw new ApiError(500, "Thumbnail upload failed");
+        }
+
+        if (video.thumbnail) {
+            const oldPublicId = video.thumbnail
+                .split("/")
+                .pop()
+                .split(".")[0];
+
+            await cloudinary.uploader.destroy(oldPublicId);
+        }
+
+        video.thumbnail = uploadedThumbnail.url;
+    }
+
+    await video.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+        new ApiResponse(200, video, "Video updated successfully")
+    );
+});
 
 const deleteVideo = asyncHandler(async (req, res) => {
-    const { videoId } = req.params
-    //TODO: delete video
-})
+
+    const { videoId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new ApiError(400, "Invalid video id");
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    if (video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not allowed to delete this video");
+    }
+
+    if (video.videoFile) {
+        const videoPublicId = video.videoFile
+            .split("/")
+            .pop()
+            .split(".")[0];
+
+        await cloudinary.uploader.destroy(videoPublicId, {
+            resource_type: "video"
+        });
+    }
+
+    if (video.thumbnail) {
+        const thumbnailPublicId = video.thumbnail
+            .split("/")
+            .pop()
+            .split(".")[0];
+
+        await cloudinary.uploader.destroy(thumbnailPublicId);
+    }
+
+    await video.deleteOne();
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Video deleted successfully")
+    );
+});
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
-    const { videoId } = req.params
-})
+
+    const { videoId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new ApiError(400, "Invalid video id");
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    if (video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not allowed to modify this video");
+    }
+
+    video.isPublished = !video.isPublished;
+
+    await video.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { isPublished: video.isPublished },
+            "Publish status updated successfully"
+        )
+    );
+});
 
 export {
     getAllVideos,
