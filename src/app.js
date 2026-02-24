@@ -20,6 +20,7 @@ import healthRoutes from "./routes/health.routes.js";
 import videoRoutes from "./routes/video.routes.js";
 import subscriptionRoutes from "./routes/subscription.routes.js";
 import likeRoutes from "./routes/like.routes.js";
+import commentRoutes from "./routes/comment.routes.js";
 
 //routes declaration 
 app.use("/api/v1/users", userRoutes);
@@ -27,5 +28,6 @@ app.use("/api/v1", healthRoutes);
 app.use("/api/v1", videoRoutes);
 app.use("/api/v1/subscriptions", subscriptionRoutes);
 app.use("/api/v1/likes", likeRoutes);
+app.use("/api/v1/comments", commentRoutes);
 
 export default app;
