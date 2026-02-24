@@ -1,22 +1,42 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const likeSchema = new mongoose.Schema({
+const likeSchema = new Schema({
     video: {
-        type: mongoose.Schema.ObjectId,
-        ref: "Video"
+        type: Schema.Types.ObjectId,
+        ref: "Video",
+        default: null
     },
     comment: {
-        type: mongoose.Schema.ObjectId,
-        ref: "Comment"
+        type: Schema.Types.ObjectId,
+        ref: "Comment",
+        default: null
     },
     tweet: {
-        type: mongoose.Schema.ObjectId,
-        ref: "Tweet"
+        type: Schema.Types.ObjectId,
+        ref: "Tweet",
+        default: null
     },
     likedBy: {
-        type: mongoose.Schema.ObjectId,
-        ref: "User"
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true
     }
-}, {timestamps: true});
+}, { timestamps: true });
 
-export const Like = mongoose.model("Like", likeSchema)
+
+likeSchema.index(
+    { likedBy: 1, video: 1 },
+    { unique: true, partialFilterExpression: { video: { $type: "objectId" } } }
+);
+
+likeSchema.index(
+    { likedBy: 1, comment: 1 },
+    { unique: true, partialFilterExpression: { comment: { $type: "objectId" } } }
+);
+
+likeSchema.index(
+    { likedBy: 1, tweet: 1 },
+    { unique: true, partialFilterExpression: { tweet: { $type: "objectId" } } }
+);
+
+export const Like = mongoose.model("Like", likeSchema);
