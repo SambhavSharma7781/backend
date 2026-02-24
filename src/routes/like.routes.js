@@ -1,0 +1,16 @@
+import { Router } from "express";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import {
+    toggleVideoLike,
+    toggleCommentLike,
+    toggleTweetLike,
+    getLikedVideos
+} from "../controllers/like.controller.js";
+
+const router = Router();
+
+router.route("/video/:videoId")
+    .post(verifyJWT, toggleVideoLike);
+
+
+export default router;
