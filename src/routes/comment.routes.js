@@ -10,11 +10,11 @@ import {
 const router = Router();
 
 router.route("/video/:videoId")
-    .get(getVideoComments);
+.post(verifyJWT, addComment);
 
 router.route("/video/:videoId")
-    .post(verifyJWT, addComment);
-
+    .get(getVideoComments);
+    
 router.route("/:commentId")
     .patch(verifyJWT, updateComment);
 
