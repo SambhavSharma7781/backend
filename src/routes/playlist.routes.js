@@ -18,11 +18,11 @@ router.route("/")
 router.route("/user/:userId")
     .get(getUserPlaylists);
 
-router.route("/:playlistId")
-    .get(getPlaylistById);
-
 router.route("/:playlistId/video/:videoId")
     .post(verifyJWT, addVideoToPlaylist);
+
+router.route("/:playlistId")
+    .get(getPlaylistById);
 
 router.route("/:playlistId/video/:videoId")
     .delete(verifyJWT, removeVideoFromPlaylist);
