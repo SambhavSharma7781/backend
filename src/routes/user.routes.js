@@ -2,8 +2,15 @@ import { Router } from "express";
 import { changeUserPassword, getCurrentUser, getUserChannelProfile, getWatchHistory, loginUser, logOutUser, refreshAcessToken, registerUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import rateLimit from "express-rate-limit";
 
 const router = Router();
+
+const loginLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 5,
+    message: "Too many login attempts. Try again after 10 minutes."
+});
 
 router.route("/register").post(
     upload.fields([
@@ -19,7 +26,7 @@ router.route("/register").post(
     registerUser
 );
 
-router.route("/login").post(loginUser)
+router.route("/login").post(loginLimiter, loginUser)
 
 router.route("/logOut").post(verifyJWT, logOutUser)
 
